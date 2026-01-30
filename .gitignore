@@ -1,0 +1,75 @@
+# =========================
+# GENERAL
+# =========================
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.swp
+*.bak
+
+# =========================
+# PYTHON
+# =========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# Virtual environments
+venv/
+.env
+.env.*
+
+# =========================
+# YOLO / COMPUTER VISION
+# =========================
+
+# Datasets
+yolo/data/**/train/
+yolo/data/**/valid/
+yolo/data/**/test/
+
+# YOLO outputs
+yolo/training/
+yolo/runs/
+
+# Model weights
+*.pt
+*.onnx
+*.engine
+
+# Images & videos
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.mp4
+*.avi
+
+# =========================
+# BACKEND
+# =========================
+backend/.env
+backend/__pycache__/
+
+# =========================
+# FRONTEND (global, Vite tiene el suyo)
+# =========================
+node_modules/
+dist/
+build/
+
+# =========================
+# DOCKER
+# =========================
+*.tar
+*.tar.gz
+
+# =========================
+# IDEs
+# =========================
+.vscode/
+.idea/

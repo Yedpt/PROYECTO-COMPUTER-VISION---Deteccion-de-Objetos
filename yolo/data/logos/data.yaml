@@ -1,9 +1,13 @@
-path: yolo/data/logos
-train: images/train
-val: images/val
-test: images/test
+train: ../train/images
+val: ../valid/images
+test: ../test/images
 
-names:
-  0: nike
-  1: coca_cola
-  2: adidas
+nc: 3
+names: ['adidas', 'coca_cola', 'nike']
+
+roboflow:
+  workspace: computer-vision-ia-47r0o
+  project: logo-detection-bwpub
+  version: 1
+  license: MIT
+  url: https://universe.roboflow.com/computer-vision-ia-47r0o/logo-detection-bwpub/dataset/1
