@@ -1,0 +1,9 @@
+path: yolo/data/logos
+train: images/train
+val: images/val
+test: images/test
+
+names:
+  0: nike
+  1: coca_cola
+  2: adidas
