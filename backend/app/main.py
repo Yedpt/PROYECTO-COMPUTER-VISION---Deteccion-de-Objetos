@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from app.controllers.predict import router as predict_router
+from app.controllers.predict_video import router as video_router
 
 app = FastAPI(
     title="Logo Detection API",
@@ -8,3 +9,6 @@ app = FastAPI(
 )
 
 app.include_router(predict_router)
+app.include_router(video_router)
+
+
