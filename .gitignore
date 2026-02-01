@@ -34,6 +34,8 @@ yolo/data/**/test/
 
 # YOLO outputs
 yolo/training/
+yolo/inference/
+
 yolo/runs/
 
 # Model weights
@@ -53,6 +55,7 @@ yolo/runs/
 # BACKEND
 # =========================
 backend/.env
+.venv/
 backend/__pycache__/
 
 # =========================

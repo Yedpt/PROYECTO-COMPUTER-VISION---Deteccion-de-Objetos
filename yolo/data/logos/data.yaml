@@ -1,6 +1,8 @@
-train: ../train/images
-val: ../valid/images
-test: ../test/images
+path: E:/Documentos/F5_Bootcamp_IA/PROYECTO-COMPUTER-VISION---Deteccion-de-Objetos/yolo/data/logos
+
+train: train/images
+val: valid/images
+test: test/images
 
 nc: 3
 names: ['adidas', 'coca_cola', 'nike']
@@ -8,6 +10,6 @@ names: ['adidas', 'coca_cola', 'nike']
 roboflow:
   workspace: computer-vision-ia-47r0o
   project: logo-detection-bwpub
-  version: 1
+  version: 3
   license: MIT
-  url: https://universe.roboflow.com/computer-vision-ia-47r0o/logo-detection-bwpub/dataset/1
+  url: https://universe.roboflow.com/computer-vision-ia-47r0o/logo-detection-bwpub/dataset/3

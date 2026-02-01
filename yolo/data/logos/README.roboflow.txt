@@ -1,8 +1,8 @@
 
-logo-detection - v1 2026-01-30 9:01pm
+logo-detection - v3 2026-02-01 12:59am
 ==============================
 
-This dataset was exported via roboflow.com on January 30, 2026 at 8:17 PM GMT
+This dataset was exported via roboflow.com on February 1, 2026 at 12:00 AM GMT
 
 Roboflow is an end-to-end computer vision platform that helps you
 * collaborate with your team on computer vision projects
@@ -17,19 +17,16 @@ visit https://github.com/roboflow/notebooks
 
 To find over 100k other datasets and pre-trained models, visit https://universe.roboflow.com
 
-The dataset includes 706 images.
+The dataset includes 1075 images.
 Objects are annotated in YOLOv8 format.
 
 The following pre-processing was applied to each image:
 * Auto-orientation of pixel data (with EXIF-orientation stripping)
-* Resize to 512x512 (Stretch)
+* Resize to 640x640 (Stretch)
 
 The following augmentation was applied to create 3 versions of each source image:
 * 50% probability of horizontal flip
-* Randomly crop between 0 and 20 percent of the image
 * Random brigthness adjustment of between -15 and +15 percent
-* Random exposure adjustment of between -10 and +10 percent
 * Random Gaussian blur of between 0 and 2.5 pixels
-* Salt and pepper noise was applied to 0.1 percent of pixels
 
 
