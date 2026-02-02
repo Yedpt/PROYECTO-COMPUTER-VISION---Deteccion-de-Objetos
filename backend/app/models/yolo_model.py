@@ -3,8 +3,11 @@ import numpy as np
 import cv2
 from app.core.config import MODEL_PATH, CONF_THRESHOLD, IMG_SIZE, DEVICE
 from pathlib import Path
+from collections import defaultdict
 
 model = YOLO(str(MODEL_PATH))
+CLASS_NAMES = model.names
+
 
 def predict_image(image_bytes: bytes):
     nparr = np.frombuffer(image_bytes, np.uint8)
@@ -21,8 +24,10 @@ def predict_image(image_bytes: bytes):
 
     for r in results:
         for box in r.boxes:
+            class_id = int(box.cls)
             detections.append({
-                "class_id": int(box.cls),
+                "class_id": class_id,
+                "class_name": CLASS_NAMES[class_id],
                 "confidence": float(box.conf),
                 "bbox": box.xyxy[0].tolist()
             })
@@ -51,12 +56,16 @@ def predict_video(
         (width, height)
     )
 
-    total_detections = 0
+    total_frames = 0
+    detections_per_class = defaultdict(int)
+    frames_with_class = defaultdict(int)
 
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
             break
+
+        total_frames += 1
 
         results = model(
             frame,
@@ -66,11 +75,44 @@ def predict_video(
             verbose=False
         )
 
-        total_detections += len(results[0].boxes)
+        classes_in_frame = set()
+
+        for box in results[0].boxes:
+            class_id = int(box.cls)
+            detections_per_class[class_id] += 1
+            classes_in_frame.add(class_id)
+
+        for cid in classes_in_frame:
+            frames_with_class[cid] += 1
+
         annotated_frame = results[0].plot()
         out.write(annotated_frame)
 
     cap.release()
     out.release()
 
-    return total_detections
+    # 📊 construir métricas PRO
+    metrics = []
+    for class_id, frame_count in frames_with_class.items():
+        time_seconds = frame_count / fps
+        percentage = (frame_count / total_frames) * 100
+
+        MIN_PERCENTAGE = 5.0  # 👈 umbral mínimo de presencia
+
+        if percentage >= MIN_PERCENTAGE:
+            metrics.append({
+                "class_name": CLASS_NAMES[class_id],
+                "detections": detections_per_class[class_id],
+                "frames": frame_count,
+                "time_seconds": round(time_seconds, 2),
+                "percentage": round(percentage, 2)
+            })
+
+
+
+    return {
+        "total_frames": total_frames,
+        "fps": fps,
+        "metrics": metrics,
+        "output_video": str(output_video)
+    }

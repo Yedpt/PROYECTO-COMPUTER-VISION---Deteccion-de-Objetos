@@ -21,17 +21,15 @@ def predict_video_endpoint(file: UploadFile = File(...)):
     input_path = TEMP_INPUT / f"{video_id}_{file.filename}"
     output_path = TEMP_OUTPUT / f"{video_id}_output.mp4"
 
-    # Guardar video recibido
     with open(input_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    total_detections = predict_video(
+    result = predict_video(
         input_video=input_path,
         output_video=output_path
     )
 
     return {
         "message": "Video procesado correctamente",
-        "total_detections": total_detections,
-        "output_video": str(output_path)
+        **result
     }

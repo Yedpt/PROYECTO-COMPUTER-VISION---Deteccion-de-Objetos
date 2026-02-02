@@ -4,6 +4,7 @@ from app.schemas.prediction import PredictionResponse
 
 router = APIRouter(prefix="/predict", tags=["Inference"])
 
+
 @router.post("/", response_model=PredictionResponse)
 async def predict(file: UploadFile = File(...)):
     image_bytes = await file.read()
