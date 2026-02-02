@@ -213,27 +213,56 @@ export default function Home() {
 
       {/* VIDEO RESULT */}
       {videoResult && (
-        <div className="mt-20 bg-[#151A2C] border border-white/5 rounded-2xl p-8">
-          <h3 className="text-xl font-semibold mb-4">
-            📊 Resultados del análisis de vídeo
-          </h3>
+  <div className="mt-20 bg-[#151A2C] border border-white/5 rounded-2xl p-8">
+    <h3 className="text-xl font-semibold mb-6">
+      📊 Resultados del análisis de vídeo
+    </h3>
+    <p className="text-sm text-gray-400 mb-6">
+    Se muestran únicamente marcas con presencia significativa en el vídeo
+    para evitar falsos positivos.
+    </p>
 
-          <ul className="text-gray-300 space-y-2">
+    <div className="grid md:grid-cols-2 gap-6">
+      {videoResult.metrics.map((m, idx) => (
+        <div
+          key={idx}
+          className="rounded-xl bg-black/30 border border-white/10 p-5"
+        >
+          <h4 className="font-semibold text-lg mb-2">
+            🏷️ {m.class_name}
+          </h4>
+
+          <ul className="text-sm text-gray-300 space-y-1">
             <li>
-              <strong>Total detecciones:</strong>{" "}
-              {videoResult.total_detections}
+              <strong>Detecciones:</strong> {m.detections}
             </li>
             <li>
-              <strong>Archivo generado:</strong>{" "}
-              {videoResult.output_video}
+              <strong>Tiempo en pantalla:</strong>{" "}
+              {m.time_seconds}s
+            </li>
+            <li>
+              <strong>Presencia en vídeo:</strong>{" "}
+              {m.percentage}%
             </li>
           </ul>
 
-          <p className="mt-4 text-sm text-gray-400">
-            El vídeo procesado contiene bounding boxes con las detecciones.
-          </p>
+          {/* barra visual */}
+          <div className="mt-3 w-full h-2 rounded-full bg-white/10">
+            <div
+              className="h-2 rounded-full bg-indigo-500"
+              style={{ width: `${m.percentage}%` }}
+            />
+          </div>
         </div>
-      )}
+      ))}
+    </div>
+
+    <p className="mt-6 text-sm text-gray-400">
+      🎬 Vídeo procesado con bounding boxes y métricas por marca.
+    </p>
+  </div>
+  )}
+
 
       {/* POWERFUL FEATURES (los cuadrados de abajo 🔥) */}
       <div className="mt-32">
