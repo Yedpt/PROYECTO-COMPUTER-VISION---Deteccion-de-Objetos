@@ -1,23 +1,32 @@
 from ultralytics import YOLO
 import numpy as np
 import cv2
-from app.core.config import MODEL_PATH, CONF_THRESHOLD, IMG_SIZE, DEVICE
 from pathlib import Path
 from collections import defaultdict
 
-model = YOLO(str(MODEL_PATH))
+from app.core.config import settings
+
+
+# -------------------------
+# Cargar modelo YOLO
+# -------------------------
+model = YOLO(str(settings.MODEL_PATH))
 CLASS_NAMES = model.names
 
 
+# -------------------------
+# IMAGE PREDICTION
+# -------------------------
 def predict_image(image_bytes: bytes):
     nparr = np.frombuffer(image_bytes, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
     results = model.predict(
         img,
-        conf=CONF_THRESHOLD,
-        imgsz=IMG_SIZE,
-        device=DEVICE
+        conf=settings.CONF_THRESHOLD,
+        imgsz=settings.IMG_SIZE,
+        device=settings.DEVICE,
+        verbose=False
     )
 
     detections = []
@@ -35,6 +44,9 @@ def predict_image(image_bytes: bytes):
     return detections
 
 
+# -------------------------
+# VIDEO PREDICTION + METRICS
+# -------------------------
 def predict_video(
     input_video: Path,
     output_video: Path,
@@ -72,6 +84,7 @@ def predict_video(
             conf=conf,
             iou=iou,
             imgsz=imgsz,
+            device=settings.DEVICE,
             verbose=False
         )
 
@@ -91,15 +104,18 @@ def predict_video(
     cap.release()
     out.release()
 
-    # 📊 construir métricas PRO
+    # -------------------------
+    # 📊 MÉTRICAS PRO (filtradas)
+    # -------------------------
     metrics = []
+    MIN_PERCENTAGE = 5.0  # umbral mínimo de presencia
+
     for class_id, frame_count in frames_with_class.items():
-        time_seconds = frame_count / fps
         percentage = (frame_count / total_frames) * 100
 
-        MIN_PERCENTAGE = 5.0  # 👈 umbral mínimo de presencia
-
         if percentage >= MIN_PERCENTAGE:
+            time_seconds = frame_count / fps
+
             metrics.append({
                 "class_name": CLASS_NAMES[class_id],
                 "detections": detections_per_class[class_id],
@@ -107,8 +123,6 @@ def predict_video(
                 "time_seconds": round(time_seconds, 2),
                 "percentage": round(percentage, 2)
             })
-
-
 
     return {
         "total_frames": total_frames,

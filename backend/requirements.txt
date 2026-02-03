@@ -6,3 +6,5 @@ numpy
 opencv-python
 torch
 ultralytics
+sqlalchemy
+psycopg2-binary

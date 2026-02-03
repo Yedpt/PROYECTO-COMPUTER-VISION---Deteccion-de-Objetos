@@ -1,4 +1,22 @@
 from pathlib import Path
+from pydantic_settings import BaseSettings
+import torch
+
+
+class Settings(BaseSettings):
+    DATABASE_URL: str
+
+    MODEL_PATH: str
+    CONF_THRESHOLD: float = 0.25
+    IMG_SIZE: int = 640
+
+    DEVICE: str = "cuda" if torch.cuda.is_available() else "cpu"
+
+    class Config:
+        env_file = ".env"
+
+
+settings = Settings()
 
 # backend/app/core/config.py
 BASE_DIR = Path(__file__).resolve().parents[3]

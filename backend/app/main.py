@@ -3,6 +3,12 @@ from app.controllers.predict import router as predict_router
 from app.controllers.predict_video import router as video_router
 from app.controllers.stream import router as stream_router
 from fastapi.middleware.cors import CORSMiddleware
+from app.db.base import Base
+from app.db.session import engine
+from app.db import models  # NO borrar
+
+
+Base.metadata.create_all(bind=engine)
 
 
 app = FastAPI(
