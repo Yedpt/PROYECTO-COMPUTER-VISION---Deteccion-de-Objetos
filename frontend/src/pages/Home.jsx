@@ -13,6 +13,7 @@ import { useRef, useState } from "react";
 import FeatureCard from "../components/FeatureCard";
 import WebcamStream from "../components/WebcamStream";
 import { predictImage, predictVideo } from "../services/api";
+import BrandAnalyticsDashboard from "../components/BrandAnalyticsDashboard";
 
 export default function Home() {
   const imageInputRef = useRef();
@@ -26,27 +27,25 @@ export default function Home() {
   const [imageLoading, setImageLoading] = useState(false);
   const [imageResult, setImageResult] = useState(null);
 
-
   /* ---------- IMAGE ---------- */
   const handleImageUpload = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+    const file = e.target.files[0];
+    if (!file) return;
 
-  setImageLoading(true);
-  setImageResult(null);
+    setImageLoading(true);
+    setImageResult(null);
 
-  try {
-    const res = await predictImage(file);
-    console.log("IMAGE RESULT:", res.data);
-    setImageResult(res.data);
-  } catch (err) {
-    console.error(err);
-    alert("Error analizando la imagen");
-  } finally {
-    setImageLoading(false);
-  }
-};
-
+    try {
+      const res = await predictImage(file);
+      console.log("IMAGE RESULT:", res.data);
+      setImageResult(res.data);
+    } catch (err) {
+      console.error(err);
+      alert("Error analizando la imagen");
+    } finally {
+      setImageLoading(false);
+    }
+  };
 
   /* ---------- VIDEO ---------- */
   const handleVideoUpload = async (e) => {
@@ -133,65 +132,11 @@ export default function Home() {
         onChange={handleVideoUpload}
       />
 
-    {imageLoading && (
+      {/* IMAGE LOADING */}
+      {imageLoading && (
         <div className="mt-16 text-center">
-            <div className="inline-flex items-center gap-3 px-6 py-4 rounded-xl bg-pink-500/10 text-pink-400">
+          <div className="inline-flex items-center gap-3 px-6 py-4 rounded-xl bg-pink-500/10 text-pink-400">
             <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-                />
-                <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                />
-            </svg>
-            <span>Analizando imagen…</span>
-            </div>
-        </div>
-        )}
-
-    {imageResult && (
-        <div className="mt-16 bg-[#151A2C] border border-white/5 rounded-2xl p-8">
-            <h3 className="text-xl font-semibold mb-4">
-            🖼️ Resultados del análisis de imagen
-            </h3>
-
-            <p className="text-gray-300 mb-2">
-            <strong>Total detecciones:</strong> {imageResult.num_detections}
-            </p>
-
-            <ul className="text-gray-400 space-y-1 text-sm">
-            {imageResult.detections.map((det, idx) => (
-                <li key={idx}>
-                • {det.class_name} — conf {(det.confidence * 100).toFixed(1)}%
-                </li>
-            ))}
-            </ul>
-        </div>
-        )}
-
-
-
-      {/* WEBCAM STREAM */}
-      {showWebcam && (
-        <WebcamStream onClose={() => setShowWebcam(false)} />
-      )}
-
-      {/* VIDEO LOADING */}
-      {videoLoading && (
-        <div className="mt-20 text-center">
-          <div className="inline-flex items-center gap-3 px-6 py-4 rounded-xl bg-indigo-500/10 text-indigo-400">
-            <svg
-              className="animate-spin h-5 w-5"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
               <circle
                 className="opacity-25"
                 cx="12"
@@ -206,65 +151,150 @@ export default function Home() {
                 d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
               />
             </svg>
-            <span>Analizando vídeo, esto puede tardar unos segundos…</span>
+            <span>Analizando imagen…</span>
+          </div>
+        </div>
+      )}
+
+      {/* IMAGE RESULT */}
+      {imageResult && (
+        <div className="mt-16 bg-[#151A2C] border border-white/5 rounded-2xl p-8">
+          <h3 className="text-xl font-semibold mb-4">
+            🖼️ Resultados del análisis de imagen
+          </h3>
+
+          <p className="text-gray-300 mb-2">
+            <strong>Total detecciones:</strong>{" "}
+            {imageResult.num_detections}
+          </p>
+
+          <ul className="text-gray-400 space-y-1 text-sm">
+            {imageResult.detections.map((det, idx) => (
+              <li key={idx}>
+                • {det.class_name} — conf{" "}
+                {(det.confidence * 100).toFixed(1)}%
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* WEBCAM */}
+      {showWebcam && (
+        <WebcamStream onClose={() => setShowWebcam(false)} />
+      )}
+
+      {/* VIDEO LOADING */}
+      {videoLoading && (
+        <div className="mt-20 text-center">
+          <div className="inline-flex items-center gap-3 px-6 py-4 rounded-xl bg-indigo-500/10 text-indigo-400">
+            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+              />
+            </svg>
+            <span>
+              Analizando vídeo, esto puede tardar unos segundos…
+            </span>
           </div>
         </div>
       )}
 
       {/* VIDEO RESULT */}
       {videoResult && (
-  <div className="mt-20 bg-[#151A2C] border border-white/5 rounded-2xl p-8">
-    <h3 className="text-xl font-semibold mb-6">
-      📊 Resultados del análisis de vídeo
-    </h3>
-    <p className="text-sm text-gray-400 mb-6">
-    Se muestran únicamente marcas con presencia significativa en el vídeo
-    para evitar falsos positivos.
-    </p>
+        <div className="mt-20 bg-[#151A2C] border border-white/5 rounded-2xl p-8">
+          <h3 className="text-xl font-semibold mb-6">
+            📊 Resultados del análisis de vídeo
+          </h3>
 
-    <div className="grid md:grid-cols-2 gap-6">
-      {videoResult.metrics.map((m, idx) => (
-        <div
-          key={idx}
-          className="rounded-xl bg-black/30 border border-white/10 p-5"
-        >
-          <h4 className="font-semibold text-lg mb-2">
-            🏷️ {m.class_name}
-          </h4>
+          {/* 🆕 SUMMARY EJECUTIVO */}
+          {videoResult.summary && (
+            <div className="mb-8 p-5 rounded-xl bg-indigo-500/10 border border-indigo-500/20">
+              <p className="text-sm text-indigo-300">
+                🏆 Marca dominante:{" "}
+                <strong>{videoResult.summary.top_brand}</strong>{" "}
+                ({videoResult.summary.top_brand_percentage}% del vídeo)
+              </p>
+              <p className="text-sm text-gray-400">
+                Duración: {videoResult.summary.video_duration}s ·
+                Marcas detectadas: {videoResult.summary.total_brands}
+              </p>
+            </div>
+          )}
 
-          <ul className="text-sm text-gray-300 space-y-1">
-            <li>
-              <strong>Detecciones:</strong> {m.detections}
-            </li>
-            <li>
-              <strong>Tiempo en pantalla:</strong>{" "}
-              {m.time_seconds}s
-            </li>
-            <li>
-              <strong>Presencia en vídeo:</strong>{" "}
-              {m.percentage}%
-            </li>
-          </ul>
+          <p className="text-sm text-gray-400 mb-6">
+            Se muestran únicamente marcas con presencia significativa
+            en el vídeo para evitar falsos positivos.
+          </p>
 
-          {/* barra visual */}
-          <div className="mt-3 w-full h-2 rounded-full bg-white/10">
-            <div
-              className="h-2 rounded-full bg-indigo-500"
-              style={{ width: `${m.percentage}%` }}
-            />
+          {videoResult.metrics?.length === 0 && (
+            <p className="text-gray-400 text-sm mb-6">
+              ⚠️ No se detectaron marcas con presencia significativa.
+            </p>
+          )}
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {videoResult.metrics?.map((m, idx) => (
+              <div
+                key={idx}
+                className="rounded-xl bg-black/30 border border-white/10 p-5"
+              >
+                <h4 className="font-semibold text-lg mb-2">
+                  🏷️ {m.class_name}
+                </h4>
+
+                <ul className="text-sm text-gray-300 space-y-1">
+                  <li>
+                    <strong>Detecciones:</strong>{" "}
+                    {m.detections}
+                  </li>
+                  <li>
+                    <strong>Tiempo en pantalla:</strong>{" "}
+                    {m.time_seconds}s
+                  </li>
+                  <li>
+                    <strong>Presencia en vídeo:</strong>{" "}
+                    {m.percentage}%
+                  </li>
+                  {/* 🆕 IMPACTO */}
+                  <li>
+                    <strong>Impacto:</strong>{" "}
+                    <span className="text-indigo-400">
+                      {m.impact}
+                    </span>
+                  </li>
+                </ul>
+
+                <div className="mt-3 w-full h-2 rounded-full bg-white/10">
+                  <div
+                    className="h-2 rounded-full bg-indigo-500"
+                    style={{ width: `${m.percentage}%` }}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
+
+          <p className="mt-6 text-sm text-gray-400">
+            🎬 Vídeo procesado con bounding boxes y métricas por marca.
+          </p>
         </div>
-      ))}
-    </div>
+      )}
 
-    <p className="mt-6 text-sm text-gray-400">
-      🎬 Vídeo procesado con bounding boxes y métricas por marca.
-    </p>
-  </div>
-  )}
+      {/* 🔥 GLOBAL ANALYTICS DASHBOARD (SUBIDO AQUÍ) */}
+      <BrandAnalyticsDashboard />
 
-
-      {/* POWERFUL FEATURES (los cuadrados de abajo 🔥) */}
+      {/* FEATURES */}
       <div className="mt-32">
         <h2 className="text-3xl font-bold text-center mb-4">
           Powerful Features for Brand Analysis
