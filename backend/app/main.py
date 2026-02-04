@@ -1,15 +1,17 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from app.controllers.predict import router as predict_router
 from app.controllers.predict_video import router as video_router
 from app.controllers.stream import router as stream_router
-from fastapi.middleware.cors import CORSMiddleware
-from app.db.base import Base
-from app.db.session import engine
-from app.db import models  # NO borrar
+
+from app.core.database import engine, Base   # 👈 AQUÍ ESTÁ LA CLAVE
+from app.db import models  # ⚠️ NO borrar (registra los modelos)
+from app.routes.analytics import router as analytics_router
+from app.controllers.analytics_ws import router as analytics_ws_router
 
 
 Base.metadata.create_all(bind=engine)
-
 
 app = FastAPI(
     title="Logo Detection API",
@@ -19,9 +21,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",  # frontend Vite
-    ],
+    allow_origins=["http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -30,5 +30,5 @@ app.add_middleware(
 app.include_router(predict_router)
 app.include_router(video_router)
 app.include_router(stream_router)
-
-
+app.include_router(analytics_router)    
+app.include_router(analytics_ws_router)

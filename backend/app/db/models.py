@@ -1,37 +1,53 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from app.db.base import Base
 
-class Video(Base):
-    __tablename__ = "videos"
+from app.core.database import Base
 
-    id = Column(Integer, primary_key=True)
+
+# =========================
+# 📊 ANALYSIS (1 ejecución)
+# =========================
+class Analysis(Base):
+    __tablename__ = "analyses"
+
+    id = Column(Integer, primary_key=True, index=True)
+
     filename = Column(String, nullable=False)
-    duration = Column(Float)
+    analysis_type = Column(String, default="video")  # video | image
+
+    total_frames = Column(Integer)
     fps = Column(Float)
+    duration = Column(Float)
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    detections = relationship("Detection", back_populates="video")
+    # Relaciones
+    brands = relationship(
+        "BrandMetric",
+        back_populates="analysis",
+        cascade="all, delete-orphan"
+    )
 
 
-class Detection(Base):
-    __tablename__ = "detections"
+# =========================
+# 🏷️ MÉTRICAS POR MARCA
+# =========================
+class BrandMetric(Base):
+    __tablename__ = "brand_metrics"
 
-    id = Column(Integer, primary_key=True)
-    video_id = Column(Integer, ForeignKey("videos.id"))
+    id = Column(Integer, primary_key=True, index=True)
+
+    analysis_id = Column(Integer, ForeignKey("analyses.id"))
 
     class_name = Column(String, index=True)
-    confidence = Column(Float)
 
-    start_time = Column(Float)
-    end_time = Column(Float)
+    detections = Column(Integer)
+    frames = Column(Integer)
 
-    bbox_x1 = Column(Float)
-    bbox_y1 = Column(Float)
-    bbox_x2 = Column(Float)
-    bbox_y2 = Column(Float)
+    time_seconds = Column(Float)
+    percentage = Column(Float)
 
-    crop_path = Column(String)
+    impact = Column(String)  # ALTO | MEDIO | BAJO | RESIDUAL
 
-    video = relationship("Video", back_populates="detections")
+    analysis = relationship("Analysis", back_populates="brands")

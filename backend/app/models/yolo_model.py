@@ -41,11 +41,26 @@ def predict_image(image_bytes: bytes):
                 "bbox": box.xyxy[0].tolist()
             })
 
-    return detections
+    return detections   # 👈 SOLO la lista
+
 
 
 # -------------------------
-# VIDEO PREDICTION + METRICS
+# IMPACT CLASSIFICATION
+# -------------------------
+def classify_impact(percentage: float) -> str:
+    if percentage >= 30:
+        return "ALTO"
+    elif percentage >= 10:
+        return "MEDIO"
+    elif percentage >= 3:
+        return "BAJO"
+    else:
+        return "RESIDUAL"
+
+
+# -------------------------
+# VIDEO PREDICTION + PRO METRICS
 # -------------------------
 def predict_video(
     input_video: Path,
@@ -105,10 +120,10 @@ def predict_video(
     out.release()
 
     # -------------------------
-    # 📊 MÉTRICAS PRO (filtradas)
+    # 📊 MÉTRICAS PRO + RANKING
     # -------------------------
     metrics = []
-    MIN_PERCENTAGE = 5.0  # umbral mínimo de presencia
+    MIN_PERCENTAGE = 3.0  # umbral mínimo (anti falsos positivos)
 
     for class_id, frame_count in frames_with_class.items():
         percentage = (frame_count / total_frames) * 100
@@ -121,12 +136,29 @@ def predict_video(
                 "detections": detections_per_class[class_id],
                 "frames": frame_count,
                 "time_seconds": round(time_seconds, 2),
-                "percentage": round(percentage, 2)
+                "percentage": round(percentage, 2),
+                "impact": classify_impact(percentage)
             })
+
+    # Ranking por presencia
+    metrics = sorted(
+        metrics,
+        key=lambda x: x["percentage"],
+        reverse=True
+    )
+
+    summary = {
+        "total_brands": len(metrics),
+        "top_brand": metrics[0]["class_name"] if metrics else None,
+        "top_brand_percentage": metrics[0]["percentage"] if metrics else 0,
+        "total_detections": sum(m["detections"] for m in metrics),
+        "video_duration": round(total_frames / fps, 2)
+    }
 
     return {
         "total_frames": total_frames,
         "fps": fps,
         "metrics": metrics,
+        "summary": summary,
         "output_video": str(output_video)
     }
