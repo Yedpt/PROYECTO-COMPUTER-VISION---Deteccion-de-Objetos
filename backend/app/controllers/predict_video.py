@@ -6,8 +6,9 @@ import uuid
 
 from app.models.yolo_model import predict_video
 from app.db.session import get_db
-from app.db.models import Analysis, BrandMetric
+from app.db.models import Analysis, BrandMetric, BrandTimeline
 from app.core.ws_manager import analytics_ws_manager
+from app.services.global_analytics import global_analytics
 
 router = APIRouter(prefix="/predict", tags=["Video"])
 
@@ -27,7 +28,7 @@ async def predict_video_endpoint(
     input_path = TEMP_INPUT / f"{video_uuid}_{file.filename}"
     output_path = TEMP_OUTPUT / f"{video_uuid}_output.mp4"
 
-    # 1️⃣ Guardar vídeo temporal
+    # 1️⃣ Guardar vídeo
     with open(input_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
@@ -40,7 +41,7 @@ async def predict_video_endpoint(
     db.commit()
     db.refresh(analysis)
 
-    # 3️⃣ Ejecutar inferencia (sync pesado → OK)
+    # 3️⃣ Inferencia
     try:
         result = predict_video(
             input_video=input_path,
@@ -49,13 +50,13 @@ async def predict_video_endpoint(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    # 4️⃣ Guardar metadatos
+    # 4️⃣ Metadatos
     analysis.total_frames = result["total_frames"]
     analysis.fps = result["fps"]
     analysis.duration = result["summary"]["video_duration"]
     db.commit()
 
-    # 5️⃣ Guardar métricas por marca
+    # 5️⃣ Métricas por marca (por vídeo)
     metrics_db = [
         BrandMetric(
             analysis_id=analysis.id,
@@ -66,25 +67,41 @@ async def predict_video_endpoint(
             percentage=m["percentage"],
             impact=m["impact"]
         )
-        for m in result.get("metrics", [])
+        for m in result["metrics"]
     ]
 
-    if metrics_db:
-        db.add_all(metrics_db)
-        db.commit()
+    db.add_all(metrics_db)
+    db.commit()
 
-    # 🔔 6️⃣ WebSocket broadcast (AHORA SÍ)
+    # 6️⃣ Timeline GLOBAL (histórico, agregado)
+    timeline_rows = [
+        BrandTimeline(
+            brand=m["class_name"],
+            impact=m["percentage"],
+            analysis_id=analysis.id
+        )
+        for m in result["metrics"]
+    ]
+
+    db.add_all(timeline_rows)
+    db.commit()
+
+    # 7️⃣ Global analytics
+    global_analytics.register_video(result["metrics"])
+
+    # 8️⃣ WebSocket
     await analytics_ws_manager.broadcast({
         "event": "analytics_updated",
         "analysis_id": analysis.id
     })
 
-    # 7️⃣ Respuesta
+    # 9️⃣ RESPUESTA → incluye timeline REAL
     return {
         "message": "Video procesado correctamente",
         "analysis_id": analysis.id,
         "summary": result["summary"],
         "metrics": result["metrics"],
+        "timeline": result["timeline"],  # 🔥 CLAVE
         "fps": result["fps"],
         "output_video": str(output_path),
     }

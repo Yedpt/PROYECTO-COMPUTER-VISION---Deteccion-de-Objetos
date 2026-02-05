@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: logo_detection_db
+    environment:
+      POSTGRES_USER: logouser
+      POSTGRES_PASSWORD: logopass
+      POSTGRES_DB: logo_detection
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - logo_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U logouser -d logo_detection"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend - FastAPI + YOLO
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: logo_detection_backend
+    environment:
+      DATABASE_URL: postgresql://logouser:logopass@postgres:5432/logo_detection
+      MODEL_PATH: /models/best.pt
+      CONF_THRESHOLD: 0.4
+      IMG_SIZE: 640
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/app:/app/app
+      - ./backend/temp:/app/temp
+      - ./yolo/training/logos_v15_stretch_640/weights:/models:ro
+      - ./backend/storage:/app/storage
+    networks:
+      - logo_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Frontend - React + Vite
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: logo_detection_frontend
+    ports:
+      - "80:80"
+    networks:
+      - logo_network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+networks:
+  logo_network:
+    driver: bridge
+
+volumes:
+  postgres_data:

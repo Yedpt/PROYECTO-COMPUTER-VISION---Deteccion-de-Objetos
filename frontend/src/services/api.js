@@ -28,4 +28,8 @@ export const predictVideo = (file) => {
 export const streamWebcamUrl = () =>
   "http://localhost:8000/stream/webcam";
 
+export const getGlobalBrandTimeline = () =>
+  api.get("/analytics/brands/timeline");
+
+
 export default api;

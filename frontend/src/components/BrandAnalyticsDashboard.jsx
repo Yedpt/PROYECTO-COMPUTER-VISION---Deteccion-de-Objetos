@@ -15,13 +15,14 @@ import useAnalyticsSocket from "../hooks/useAnalyticsSocket";
 
 const COLORS = ["#6366F1", "#EC4899", "#22D3EE", "#F59E0B"];
 
-export default function BrandAnalyticsDashboard() {
+export default function BrandAnalyticsDashboard({ refreshKey }) {
   const [data, setData] = useState([]);
   const [totalVideos, setTotalVideos] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const fetchAnalytics = useCallback(async () => {
     try {
+      setLoading(true);
       const res = await axios.get(
         "http://localhost:8000/analytics/top-brands"
       );
@@ -36,7 +37,7 @@ export default function BrandAnalyticsDashboard() {
 
   useEffect(() => {
     fetchAnalytics();
-  }, [fetchAnalytics]);
+  }, [fetchAnalytics, refreshKey]);
 
   useAnalyticsSocket(fetchAnalytics);
 

@@ -8,3 +8,5 @@ torch
 ultralytics
 sqlalchemy
 psycopg2-binary
+pydantic-settings
+websockets

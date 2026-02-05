@@ -3,21 +3,17 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, distinct
 
 from app.db.session import get_db
-from app.db.models import Analysis, BrandMetric
+from app.db.models import Analysis, BrandMetric, BrandTimeline
+from app.services.global_analytics import global_analytics
 
-router = APIRouter(
-    prefix="/analytics",
-    tags=["Analytics"]
-)
+router = APIRouter(prefix="/analytics", tags=["Analytics"])
+
 
 # ==========================
-# 🏆 TOP BRANDS (GLOBAL)
+# 🏆 TOP BRANDS
 # ==========================
 @router.get("/top-brands")
-def get_top_brands(
-    limit: int = 10,
-    db: Session = Depends(get_db)
-):
+def get_top_brands(limit: int = 10, db: Session = Depends(get_db)):
     total_videos = (
         db.query(func.count(Analysis.id))
         .filter(Analysis.analysis_type == "video")
@@ -38,20 +34,18 @@ def get_top_brands(
         .all()
     )
 
-    brands = [
-        {
-            "brand": r.brand,
-            "detections": int(r.detections),
-            "time_seconds": round(r.time_seconds or 0, 2),
-            "avg_percentage": round(r.avg_percentage or 0, 2),
-            "videos": r.videos,
-        }
-        for r in results
-    ]
-
     return {
         "total_videos": total_videos,
-        "brands": brands,
+        "brands": [
+            {
+                "brand": r.brand,
+                "detections": int(r.detections),
+                "time_seconds": round(r.time_seconds or 0, 2),
+                "avg_percentage": round(r.avg_percentage or 0, 2),
+                "videos": r.videos,
+            }
+            for r in results
+        ]
     }
 
 
@@ -59,15 +53,8 @@ def get_top_brands(
 # 📊 RESUMEN POR VÍDEO
 # ==========================
 @router.get("/video/{analysis_id}/summary")
-def get_video_summary(
-    analysis_id: int,
-    db: Session = Depends(get_db)
-):
-    analysis = (
-        db.query(Analysis)
-        .filter(Analysis.id == analysis_id)
-        .first()
-    )
+def get_video_summary(analysis_id: int, db: Session = Depends(get_db)):
+    analysis = db.query(Analysis).filter(Analysis.id == analysis_id).first()
 
     if not analysis:
         raise HTTPException(status_code=404, detail="Analysis not found")
@@ -98,3 +85,41 @@ def get_video_summary(
             for b in brands
         ]
     }
+
+
+# ==========================
+# 📈 GLOBAL BRAND TIMELINE
+# ==========================
+@router.get("/brands/timeline")
+def global_brand_timeline(db: Session = Depends(get_db)):
+    rows = (
+        db.query(
+            func.date(Analysis.created_at).label("date"),
+            BrandMetric.class_name.label("brand"),
+            func.sum(BrandMetric.time_seconds).label("impact")
+        )
+        .join(Analysis, Analysis.id == BrandMetric.analysis_id)
+        .group_by(func.date(Analysis.created_at), BrandMetric.class_name)
+        .order_by(func.date(Analysis.created_at))
+        .all()
+    )
+
+    timeline = {}
+
+    for r in rows:
+        d = r.date.isoformat()
+        timeline.setdefault(d, {"date": d})
+        timeline[d][r.brand] = round(float(r.impact), 2)
+
+    return list(timeline.values())
+
+
+
+@router.get("/overview")
+def analytics_overview():
+    return global_analytics.overview()
+
+
+@router.get("/brands/executive")
+def executive_brand_ranking():
+    return global_analytics.brand_ranking()

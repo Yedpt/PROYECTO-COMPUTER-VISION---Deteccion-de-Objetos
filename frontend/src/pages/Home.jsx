@@ -14,6 +14,13 @@ import FeatureCard from "../components/FeatureCard";
 import WebcamStream from "../components/WebcamStream";
 import { predictImage, predictVideo } from "../services/api";
 import BrandAnalyticsDashboard from "../components/BrandAnalyticsDashboard";
+import ExecutiveStats from "../components/ExecutiveStats";
+import AnalysisExecutivePanel from "../components/AnalysisExecutivePanel";
+import BrandMediaChart from "../components/BrandMediaChart";
+import BrandImpactTimeline from "../components/BrandImpactTimeline";
+import GlobalBrandTimeline from "../components/GlobalBrandTimeline";
+import GlobalBrandTimelineWrapper from "../components/GlobalBrandTimelineWrapper";  
+
 
 export default function Home() {
   const imageInputRef = useRef();
@@ -27,6 +34,9 @@ export default function Home() {
   const [imageLoading, setImageLoading] = useState(false);
   const [imageResult, setImageResult] = useState(null);
 
+   // 🔥 CLAVE
+  const [analyticsRefreshKey, setAnalyticsRefreshKey] = useState(0);
+
   /* ---------- IMAGE ---------- */
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -39,6 +49,8 @@ export default function Home() {
       const res = await predictImage(file);
       console.log("IMAGE RESULT:", res.data);
       setImageResult(res.data);
+    // 🔥 fuerza refresh analytics
+      setAnalyticsRefreshKey((k) => k + 1);
     } catch (err) {
       console.error(err);
       alert("Error analizando la imagen");
@@ -59,6 +71,8 @@ export default function Home() {
       const res = await predictVideo(file);
       console.log("VIDEO RESULT:", res.data);
       setVideoResult(res.data);
+    // 🔥 fuerza refresh analytics
+      setAnalyticsRefreshKey((k) => k + 1);
     } catch (err) {
       console.error(err);
       alert("Error procesando el vídeo");
@@ -291,8 +305,53 @@ export default function Home() {
         </div>
       )}
 
-      {/* 🔥 GLOBAL ANALYTICS DASHBOARD (SUBIDO AQUÍ) */}
-      <BrandAnalyticsDashboard />
+              {/* 🧠 ANALYSIS EXECUTIVE DASHBOARD */}
+        <AnalysisExecutivePanel
+          imageResult={imageResult}
+          videoResult={videoResult}
+        />
+
+        {/* 📊 BRAND MEDIA CHART (ANÁLISIS ACTUAL) */}
+        {videoResult && (
+          <div className="mt-16">
+            <BrandMediaChart
+              data={(() => {
+                const imageCounts = {};
+
+                imageResult?.detections?.forEach((d) => {
+                  imageCounts[d.class_name] =
+                    (imageCounts[d.class_name] || 0) + 1;
+                });
+
+                return videoResult.metrics.map((m) => ({
+                  brand: m.class_name,
+                  videos: m.detections,
+                  images: imageCounts[m.class_name] || 0,
+                }));
+              })()}
+            />
+          </div>
+        )}
+
+                {/* ⏱️ BRAND IMPACT TIMELINE (POR VÍDEO) */}
+        {videoResult?.timeline && (
+          <BrandImpactTimeline data={videoResult.timeline} />
+        )}
+
+
+      
+            {/* 🌍 GLOBAL BRAND TIMELINE */}
+      <GlobalBrandTimelineWrapper refreshKey={analyticsRefreshKey} />
+
+
+    
+
+          {/* 🧠 EXECUTIVE OVERVIEW */}
+      <ExecutiveStats refreshKey={analyticsRefreshKey} />
+
+      {/* 🔥 GLOBAL ANALYTICS DASHBOARD */}
+       <BrandAnalyticsDashboard refreshKey={analyticsRefreshKey} />
+
 
       {/* FEATURES */}
       <div className="mt-32">

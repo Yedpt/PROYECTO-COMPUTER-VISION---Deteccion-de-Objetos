@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 from pathlib import Path
 from collections import defaultdict
+import math
 
 from app.core.config import settings
 
@@ -41,8 +42,7 @@ def predict_image(image_bytes: bytes):
                 "bbox": box.xyxy[0].tolist()
             })
 
-    return detections   # 👈 SOLO la lista
-
+    return detections
 
 
 # -------------------------
@@ -60,7 +60,7 @@ def classify_impact(percentage: float) -> str:
 
 
 # -------------------------
-# VIDEO PREDICTION + PRO METRICS
+# VIDEO PREDICTION + REAL TIMELINE
 # -------------------------
 def predict_video(
     input_video: Path,
@@ -84,15 +84,23 @@ def predict_video(
     )
 
     total_frames = 0
+    frame_index = 0
+
     detections_per_class = defaultdict(int)
     frames_with_class = defaultdict(int)
+
+    # 🔥 timeline real → segundo → marca → detecciones
+    timeline = defaultdict(lambda: defaultdict(int))
 
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
             break
 
+        frame_index += 1
         total_frames += 1
+
+        current_second = int(frame_index / fps)
 
         results = model(
             frame,
@@ -107,8 +115,12 @@ def predict_video(
 
         for box in results[0].boxes:
             class_id = int(box.cls)
+            brand = CLASS_NAMES[class_id]
+
             detections_per_class[class_id] += 1
             classes_in_frame.add(class_id)
+
+            timeline[current_second][brand] += 1
 
         for cid in classes_in_frame:
             frames_with_class[cid] += 1
@@ -120,10 +132,10 @@ def predict_video(
     out.release()
 
     # -------------------------
-    # 📊 MÉTRICAS PRO + RANKING
+    # 📊 MÉTRICAS
     # -------------------------
     metrics = []
-    MIN_PERCENTAGE = 3.0  # umbral mínimo (anti falsos positivos)
+    MIN_PERCENTAGE = 3.0
 
     for class_id, frame_count in frames_with_class.items():
         percentage = (frame_count / total_frames) * 100
@@ -140,12 +152,7 @@ def predict_video(
                 "impact": classify_impact(percentage)
             })
 
-    # Ranking por presencia
-    metrics = sorted(
-        metrics,
-        key=lambda x: x["percentage"],
-        reverse=True
-    )
+    metrics.sort(key=lambda x: x["percentage"], reverse=True)
 
     summary = {
         "total_brands": len(metrics),
@@ -155,10 +162,21 @@ def predict_video(
         "video_duration": round(total_frames / fps, 2)
     }
 
+    # -------------------------
+    # 🧠 NORMALIZAR TIMELINE
+    # -------------------------
+    timeline_output = []
+
+    for second in sorted(timeline.keys()):
+        row = {"second": second}
+        row.update(timeline[second])
+        timeline_output.append(row)
+
     return {
         "total_frames": total_frames,
         "fps": fps,
         "metrics": metrics,
         "summary": summary,
+        "timeline": timeline_output,  # 🔥 REAL
         "output_video": str(output_video)
     }

@@ -51,3 +51,13 @@ class BrandMetric(Base):
     impact = Column(String)  # ALTO | MEDIO | BAJO | RESIDUAL
 
     analysis = relationship("Analysis", back_populates="brands")
+
+
+class BrandTimeline(Base):
+    __tablename__ = "brand_timeline"
+
+    id = Column(Integer, primary_key=True, index=True)
+    brand = Column(String, index=True)
+    impact = Column(Float)
+    analysis_id = Column(Integer, ForeignKey("analyses.id"))
+    created_at = Column(DateTime, default=datetime.utcnow)
